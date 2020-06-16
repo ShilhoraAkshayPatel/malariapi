@@ -9,20 +9,25 @@ import numpy as np
 from keras.applications.imagenet_utils import preprocess_input, decode_predictions
 import os
 from werkzeug.utils import secure_filename
+import base64
+from scipy.misc import imsave, imread, imresize
+import re
 
 app = Flask(__name__)
 cors = CORS(app)
 
 
-
 def predictiohelper(inputimg):
-    img = image.load_img(inputimg, target_size=(128, 128))
-    inputimg = image.img_to_array(img)
-    x = np.expand_dims(inputimg, axis=0)
     model = pickle.load(open('finalized_model.sav', 'rb'))
-    predction = model.predict(x)
+    predction = model.predict(inputimg)
 
     return predction
+
+
+def convertImage(imgData1):
+    imgstr = re.search(b'base64,(.*)', imgData1).group(1)
+    with open('output.png', 'wb') as output:
+        output.write(base64.b64decode(imgstr))
 
 
 @app.route("/")
@@ -32,20 +37,18 @@ def index():
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    if request.method == 'POST':
-        # Get the file from post request
-        f = request.files['file']
+    f = request.files['file']
+    convertImage(f)
+    xx = imread('output.png', mode='L')
+    xxx = np.invert(xx)
+    xxxx = imresize(xxx, (128, 128))
+    xxxxx = xxxx.reshape(1, 128, 128, 3)
 
-        # Save the file to ./uploads
-        basepath = os.path.dirname(__file__)
-        file_path = os.path.join(
-            basepath, 'uploads', secure_filename(f.filename))
-        f.save(file_path)
-        predclass = {0: 'Parasitized', 1: 'Uninfected'}
+    predclass = {0: 'Parasitized', 1: 'Uninfected'}
 
-        predictions = predictiohelper(file_path)
+    predictions = predictiohelper(xxxxx)
     # print('INFO Predictions: {}'.format(predictions))
-        return jsonify(predclass[np.argmax(predictions)])
+    return jsonify(predclass[np.argmax(predictions)])
     # return jsonify(data)
 
 
