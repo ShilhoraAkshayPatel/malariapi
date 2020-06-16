@@ -4,7 +4,7 @@ from tensorflow.keras import backend
 import tensorflow as tf
 from flask import Flask, request, jsonify, render_template
 import pickle
-from keras.preprocessing import image
+from keras.preprocessing.image import load_img, img_to_array
 import numpy as np
 from keras.applications.imagenet_utils import preprocess_input, decode_predictions
 import os
@@ -12,9 +12,12 @@ from werkzeug.utils import secure_filename
 import base64
 from scipy.misc import imsave, imread, imresize
 import re
+from PIL import Image
 
 app = Flask(__name__)
 cors = CORS(app)
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+app.config['IMAGE_UPLOADS'] = os.path.join(APP_ROOT, 'static')
 
 
 def predictiohelper(inputimg):
@@ -24,12 +27,6 @@ def predictiohelper(inputimg):
     return predction
 
 
-def convertImage(imgData1):
-    imgstr = re.search(b'base64,(.*)', imgData1).group(1)
-    with open('output.png', 'wb') as output:
-        output.write(base64.b64decode(imgstr))
-
-
 @app.route("/")
 def index():
     return "Api is working go to /api/predict to get predction with img as input"
@@ -37,21 +34,27 @@ def index():
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    f = request.files['file']
-    convertImage(f)
-    xx = imread('output.png', mode='L')
-    xxx = np.invert(xx)
-    xxxx = imresize(xxx, (128, 128))
-    xxxxx = xxxx.reshape(1, 128, 128, 3)
+    image = request.files['input_file']
+    filename = image.filename
+    file_path = os.path.join(app.config["IMAGE_UPLOADS"], filename)
+    image_pil = Image.open(image)
+    image_pil.thumbnail((600, 300), Image.ANTIALIAS)
+    image_pil.save(file_path)
+
+    # classify image
+    image = load_img(image, target_size=(128, 128))
+    image = img_to_array(image)
+    image = np.expand_dims(image, axis=0)
+    #image = preprocess_input(image)
 
     predclass = {0: 'Parasitized', 1: 'Uninfected'}
 
-    predictions = predictiohelper(xxxxx)
+    predictions = predictiohelper(image)
     # print('INFO Predictions: {}'.format(predictions))
     return jsonify(predclass[np.argmax(predictions)])
     # return jsonify(data)
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(port=port)
+    #port = int(os.environ.get('PORT', 5000))
+    app.run()
