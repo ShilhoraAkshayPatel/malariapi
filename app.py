@@ -1,30 +1,41 @@
 from flask_cors import CORS
-from tensorflow.keras.models import load_model
-from tensorflow.keras import backend
-import tensorflow as tf
-from flask import Flask, request, jsonify, render_template
-import pickle
-from keras.preprocessing.image import load_img, img_to_array
-import numpy as np
-from keras.applications.imagenet_utils import preprocess_input, decode_predictions
-import os
-from werkzeug.utils import secure_filename
 import base64
-from scipy.misc import imsave, imread, imresize
-import re
+import numpy as np
+import io
 from PIL import Image
+import keras
+from keras import backend as K
+from keras.models import Sequential
+from keras.models import load_model
+from keras.preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import img_to_array
+from flask import request
+from flask import jsonify
+from flask import Flask
+import pickle
+import tensorflow as tf
 
 app = Flask(__name__)
 cors = CORS(app)
-APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-app.config['IMAGE_UPLOADS'] = os.path.join(APP_ROOT, 'static')
+model = None
 
 
-def predictiohelper(inputimg):
+def get_model():
+    # load the pre-trained Keras model (here we are using a model
+    # pre-trained on ImageNet and provided by Keras, but you can
+    # substitute in your own networks just as easily)
+    global model
     model = pickle.load(open('finalized_model.sav', 'rb'))
-    predction = model.predict(inputimg)
+    #model = load_model('finalized_model.sav')
 
-    return predction
+
+def preprocess_image(image, target_size):
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+    image = image.resize(target_size)
+    image = img_to_array(image)
+    image = np.expand_dims(image, axis=0)
+    return image
 
 
 @app.route("/")
@@ -34,27 +45,21 @@ def index():
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    image = request.files['input_file']
-    filename = image.filename
-    file_path = os.path.join(app.config["IMAGE_UPLOADS"], filename)
-    image_pil = Image.open(image)
-    image_pil.thumbnail((600, 300), Image.ANTIALIAS)
-    image_pil.save(file_path)
+    message = request.get_json(force=True)
+    encoded = message['image']
+    decoded = base64.b64decode(encoded)
+    image = Image.open(io.BytesIO(decoded))
+    processed_image = preprocess_image(image, target_size=(128, 128))
 
-    # classify image
-    image = load_img(image, target_size=(128, 128))
-    image = img_to_array(image)
-    image = np.expand_dims(image, axis=0)
-    #image = preprocess_input(image)
+    prediction = model.predict(processed_image)
 
-    predclass = {0: 'Parasitized', 1: 'Uninfected'}
-
-    predictions = predictiohelper(image)
-    # print('INFO Predictions: {}'.format(predictions))
-    return jsonify(predclass[np.argmax(predictions)])
-    # return jsonify(data)
+    response = prediction
+    return jsonify(response)
 
 
 if __name__ == '__main__':
     #port = int(os.environ.get('PORT', 5000))
+    print(("* Loading Keras model and Flask starting server..."
+           "please wait until server has fully started"))
+    get_model()
     app.run()
