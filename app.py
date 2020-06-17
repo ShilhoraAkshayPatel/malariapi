@@ -43,8 +43,8 @@ def predict():
     processed_image = preprocess_image(image, target_size=(128, 128))
 
     prediction = model.predict(processed_image)
-
-    response = prediction
+    preclass = {0: "Parasitized", 1: "Uninfected"}
+    response = preclass[np.argmax(prediction)]
     return jsonify(response)
 
 
@@ -52,5 +52,4 @@ if __name__ == '__main__':
     #port = int(os.environ.get('PORT', 5000))
     print(("* Loading Keras model and Flask starting server..."
            "please wait until server has fully started"))
-    get_model()
     app.run()
