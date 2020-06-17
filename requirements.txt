@@ -22,4 +22,3 @@ requests==2.22.0
 requests-oauthlib==1.3.0
 tensorflow-cpu==2.2.0
 pillow
-base64
