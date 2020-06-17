@@ -17,15 +17,7 @@ import tensorflow as tf
 
 app = Flask(__name__)
 cors = CORS(app)
-
-
-def get_model():
-    # load the pre-trained Keras model (here we are using a model
-    # pre-trained on ImageNet and provided by Keras, but you can
-    # substitute in your own networks just as easily)
-    global model
-    model = pickle.load(open('finalized_model.sav', 'rb'))
-    #model = load_model('finalized_model.sav')
+model = pickle.load(open('finalized_model.sav', 'rb'))
 
 
 def preprocess_image(image, target_size):
