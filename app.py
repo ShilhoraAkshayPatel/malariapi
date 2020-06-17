@@ -17,7 +17,6 @@ import tensorflow as tf
 
 app = Flask(__name__)
 cors = CORS(app)
-model = None
 
 
 def get_model():

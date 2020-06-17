@@ -39,7 +39,7 @@
                 image: base64Image
             }
             console.log(message);
-            $.post("http://127.0.0.1:5000/api/predict", JSON.stringify(message), function (response) {
+            $.post("https://malareaapi333.herokuapp.com/api/predict", JSON.stringify(message), function (response) {
                 $("#dog-prediction").text(response);
                 $("#cat-prediction").text(response);
                 console.log(response);
