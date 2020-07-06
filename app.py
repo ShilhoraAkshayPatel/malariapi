@@ -39,10 +39,11 @@ def index():
 def predict():
     #message = request.get_json(force=True)
     f = request.files['file']
+    image=f.filename
     #encoded = message['image']
     #decoded = base64.b64decode(encoded)
     #image = Image.open(io.BytesIO(decoded))
-    img = image.load_img(f, target_size=(128, 128))
+    img = image.load_img(image, target_size=(128, 128))
 
     # Preprocessing the image
     x = image.img_to_array(img)
