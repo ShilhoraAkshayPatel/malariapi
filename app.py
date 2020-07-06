@@ -14,18 +14,17 @@ from flask import jsonify
 from flask import Flask
 import pickle
 import tensorflow as tf
-import cv2
 
 app = Flask(__name__)
 cors = CORS(app)
 model = pickle.load(open('finalized_model.sav', 'rb'))
 
 
-def preprocess_image(image):
-    #if image.mode != "RGB":
-        #image = image.convert("RGB")
-    #image = image.resize(target_size)
-    #image = img_to_array(image)
+def preprocess_image(image, target_size):
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+    image = image.resize(target_size)
+    image = img_to_array(image)
     image = np.expand_dims(image, axis=0)
     return image
 
@@ -40,11 +39,8 @@ def predict():
     message = request.get_json(force=True)
     encoded = message['image']
     decoded = base64.b64decode(encoded)
-    #image = Image.open(io.BytesIO(decoded))
-    image=cv2.imread(decoded)
-    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    dim = (128, 128)
-    processed_image = cv2.resize(rgb, dim)
+    image = Image.open(io.BytesIO(decoded))
+    processed_image = preprocess_image(image, target_size=(128, 128))
 
     prediction = model.predict(processed_image)
     preclass = {0: "Parasitized", 1: "Uninfected"}
