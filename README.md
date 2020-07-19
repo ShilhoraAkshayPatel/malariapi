@@ -1,5 +1,5 @@
 # Malaria Api
-## This Malaria Api is for the  [Paper]() 
+## This Malaria Api is for this  [Paper]() 
 *For more information on the model and how we constructed the Deeplearning Model Refer the paper*
 
 # Development of RestApi
