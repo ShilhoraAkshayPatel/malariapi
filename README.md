@@ -28,5 +28,5 @@ Routes | Description | URL
 }
 ```
 it accepts json object as input as shown in the above example.
-> * Note:the json object should as above don't change message and image name just supply base64 encoded image in place of base64Imag *
+>  Note : *The json object should as above don't change message and image name just supply base64 encoded image in place of base64Imag*
 
